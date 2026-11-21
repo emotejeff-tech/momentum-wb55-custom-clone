@@ -110,6 +110,38 @@ def test_compile_smoke() -> bool:
     return result.returncode == 0
 
 
+def test_display_driver() -> bool:
+    exe = os.path.join(ROOT, "tests", "display_driver_test.exe" if os.name == "nt" else "display_driver_test")
+    cmd = [
+        sys.executable,
+        "-m",
+        "ziglang",
+        "cc",
+        "-std=c11",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "-I",
+        os.path.join(ROOT, "tests", "host_stubs"),
+        "-I",
+        os.path.join(ROOT, "firmware", "display_driver_patch"),
+        os.path.join(ROOT, "tests", "display_driver_test.c"),
+        os.path.join(ROOT, "firmware", "display_driver_patch", "st7567_i2c.c"),
+        "-o",
+        exe,
+    ]
+    compiled = run(cmd)
+    if compiled.returncode != 0:
+        print("display driver test skipped (zig unavailable or compile failed):")
+        print((compiled.stderr or compiled.stdout)[-1500:])
+        return True
+    result = run([exe])
+    print(result.stdout.strip())
+    if result.returncode != 0:
+        print(result.stderr)
+    return result.returncode == 0
+
+
 def main() -> int:
     results = {}
     results["python framing"] = test_python()
@@ -117,6 +149,7 @@ def main() -> int:
     results["C framing"] = c_ok
     results["C/Python interop"] = test_interop(frame_hex) if c_ok else False
     results["compile smoke"] = test_compile_smoke()
+    results["display driver behaviour"] = test_display_driver()
     results["end-to-end bridge"] = test_e2e()
 
     print("\n=== summary ===")

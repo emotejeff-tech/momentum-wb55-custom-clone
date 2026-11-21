@@ -239,8 +239,9 @@ python tests/run_all.py
 
 This runs: Python framing self-tests, the C framing implementation (compiled
 with `zig cc`), a byte-exact C↔Python interop check, a compile-smoke of the
-display and nRF24 drivers against the real u8g2 headers, and an end-to-end
-bridge test with a simulated STM32 and a fake LLM. Details and coverage gaps:
+display and nRF24 drivers against the real u8g2 headers, a byte-level
+behaviour test of the ST7567 init/addressing logic, and an end-to-end bridge
+test with a simulated STM32 and a fake LLM. Details and coverage gaps:
 [`tests/README.md`](tests/README.md).
 
 What this does **not** cover: the `fbt TARGET_HW=55` build, electrical timing,

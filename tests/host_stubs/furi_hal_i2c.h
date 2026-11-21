@@ -5,7 +5,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef struct FuriHalI2cBusHandle FuriHalI2cBusHandle;
+typedef struct FuriHalI2cBusHandle {
+    int unused;
+} FuriHalI2cBusHandle;
 
 void furi_hal_i2c_acquire(const FuriHalI2cBusHandle* handle);
 void furi_hal_i2c_release(const FuriHalI2cBusHandle* handle);

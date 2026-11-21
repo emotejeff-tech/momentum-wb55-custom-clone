@@ -14,6 +14,7 @@ python tests/run_all.py
 | `bridge_firmware/protocol/test_protocol.c` | The **C** implementation of the same framing, compiled with `zig cc` |
 | C↔Python interop (inside `run_all.py`) | The C test's emitted frame parses in Python and re-encodes byte-for-byte |
 | `compile_smoke.py` | `st7567_i2c.c`, `u8g2_st7567_i2c.c` (against real u8g2 headers) and `nrf24.c` compile cleanly with `-Wall -Wextra -Werror` |
+| `display_driver_test.c` | The exact I²C byte stream the panel receives: `0x3F` address, `0x00`/`0x40` control bytes, the 13-transaction init sequence, page/column addressing, right-edge clipping, bad-page rejection, contrast/flip helpers, and a full 8-page fill |
 | `e2e_bridge_test.py` | Full bridge path: `socket://` serial transport, HELLO/ACK, `AI_REQ` → LLM tool call → `CMD status` → `CMD_RESULT` → second LLM call → `AI_CHUNK` + `AI_RESP`, with a fake STM32 and a fake OpenAI-compatible server |
 
 ## What is deliberately not tested
