@@ -173,7 +173,11 @@ class Link:
     # -- connection ------------------------------------------------------
     def open(self) -> bool:
         try:
-            self.ser = serial.Serial(self.port, self.baud, timeout=0.05, write_timeout=1)
+            # serial_for_url also accepts socket://host:port, which the
+            # end-to-end test uses as a virtual UART.
+            self.ser = serial.serial_for_url(
+                self.port, baudrate=self.baud, timeout=0.05, write_timeout=1
+            )
             self.ser.reset_input_buffer()
             self.connected = True
             self.last_rx = time.monotonic()

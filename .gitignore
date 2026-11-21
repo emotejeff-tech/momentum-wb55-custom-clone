@@ -31,3 +31,12 @@ Thumbs.db
 
 # Research scratch (never commit clones of upstream firmware)
 .research/
+
+# Test artifacts
+*.exe
+.test-state/
+bridge_firmware/protocol/test_protocol
+
+*.pdb
+*.o
+

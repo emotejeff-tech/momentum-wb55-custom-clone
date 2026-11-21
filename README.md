@@ -228,7 +228,25 @@ Momentum **will boot** without these, but core features will be missing:
   does not open pull requests against Momentum; treat any upstream attempt as
   requiring a full human rewrite and the maintainers' consent.
 
-## 11. Sources
+## 11. Testing
+
+Host-side, no hardware required:
+
+```bash
+pip install pyserial ziglang
+python tests/run_all.py
+```
+
+This runs: Python framing self-tests, the C framing implementation (compiled
+with `zig cc`), a byte-exact C↔Python interop check, a compile-smoke of the
+display and nRF24 drivers against the real u8g2 headers, and an end-to-end
+bridge test with a simulated STM32 and a fake LLM. Details and coverage gaps:
+[`tests/README.md`](tests/README.md).
+
+What this does **not** cover: the `fbt TARGET_HW=55` build, electrical timing,
+or any radio behaviour — those are Phases 0–3 in the roadmap.
+
+## 12. Sources
 
 Primary sources are listed in [`docs/RESEARCH_FINDINGS.md`](docs/RESEARCH_FINDINGS.md) §9
 and inline where used. The most load-bearing ones:
