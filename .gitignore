@@ -40,5 +40,6 @@ bridge_firmware/protocol/test_protocol
 *.pdb
 *.o
 
-tests/display_driver_test*
+tests/display_driver_test.exe
+tests/display_driver_test.pdb
 
