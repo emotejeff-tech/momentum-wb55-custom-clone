@@ -1,0 +1,33 @@
+# Build artifacts
+build/
+.pio/
+.pioenvs/
+.piolibdeps/
+*.dfu
+*.bin
+*.elf
+*.map
+*.o
+*.d
+*.a
+
+# Secrets and local config
+bridge_firmware/esp32s3_bridge/include/secrets.h
+*.env
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Research scratch (never commit clones of upstream firmware)
+.research/

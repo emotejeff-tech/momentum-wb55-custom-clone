@@ -1,0 +1,30 @@
+[Unit]
+Description=WB55 companion bridge (UART protocol + AI agent)
+After=network-online.target multi-user.target
+Wants=network-online.target
+# Pwnagotchi is optional; the bridge starts even without it.
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /opt/wb55-bridge/bridge.py
+WorkingDirectory=/opt/wb55-bridge
+Restart=always
+RestartSec=3
+Environment=WB55_PORT=/dev/ttyAMA0
+Environment=WB55_BAUD=921600
+Environment=WB55_STATE_FILE=/run/wb55-bridge/state.json
+Environment=WB55_EVENT_FIFO=/run/wb55-bridge/events.fifo
+Environment=WB55_ARMED_FILE=/run/wb55-bridge/armed
+Environment=WB55_ALLOW_TX=0
+# Put the API key in an EnvironmentFile, not here:
+EnvironmentFile=-/etc/wb55-bridge.env
+# The bridge does not need root once the serial group is set up.
+SupplementaryGroups=dialout
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/run/wb55-bridge
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

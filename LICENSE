@@ -1,0 +1,34 @@
+Copyright (c) 2026 momentum-wb55-custom-clone contributors
+
+This repository is dual-licensed by content type:
+
+1. **Firmware and software** (everything under `firmware/`, `bridge_firmware/`,
+   and any `.c`, `.h`, `.cpp`, `.py`, `.ini` file) is free software: you can
+   redistribute it and/or modify it under the terms of the **GNU General Public
+   License, version 3 or (at your option) any later version**, as published by
+   the Free Software Foundation.
+
+   This program is distributed in the hope that it will be useful, but WITHOUT
+   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+   FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+   more details: <https://www.gnu.org/licenses/gpl-3.0.html>
+
+   The code links against Flipper/Momentum (GPL-3.0) and u8g2 (GPL-2.0-or-
+   later); GPL-3.0-or-later is the compatible choice for the combined work.
+
+2. **Documentation and hardware descriptions** (everything under `docs/`,
+   `hardware/`, and the root `README.md`) are licensed under the **Creative
+   Commons Attribution-ShareAlike 4.0 International License** (CC BY-SA 4.0):
+   <https://creativecommons.org/licenses/by-sa/4.0/>
+
+SPDX-License-Identifier: GPL-3.0-or-later AND CC-BY-SA-4.0
+
+## Notes
+
+- No Flipper Zero, Momentum, or u8g2 source code is copied into this
+  repository. The display driver is an independent implementation of the
+  ST7567 command set and of u8g2's public callback API.
+- "Flipper Zero" and "Momentum" are used descriptively; this project is not
+  affiliated with or endorsed by Flipper Devices or the Momentum maintainers.
+- Do not use this project to transmit on frequencies or in ways that are
+  illegal in your jurisdiction. The default configuration is receive-only.

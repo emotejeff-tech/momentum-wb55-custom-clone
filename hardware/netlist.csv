@@ -1,0 +1,61 @@
+Net,From,To,Notes
+VBAT,BT1.+,U7.BAT+,battery positive through protection
+VBAT,BT1.+,U8.VIN,boost input
+VBAT,BT1.+,U9.VIN,buck-boost input
+VBAT,BT1.+,R12.1,battery divider top
+GND,BT1.-,GND,common ground
++5V,U8.VOUT,J4.5V,Pi Zero 2 W 5 V rail
++5V,U8.VOUT,U10.5V,optional companion
++3V3,U9.VOUT,U1.VDD,MCU main supply
++3V3,U9.VOUT,U1.VDDA,through 4.7 uF + 100 nF
++3V3,U9.VOUT,U2.3V3,LCD supply with 100 nF + 4.7 uF
++3V3,U9.VOUT,U3.VCC,CC1101 supply with 100 nF + 10 uF
++3V3,U9.VOUT,U4.VCC,nRF24 supply with 100 nF + 100 uF
++3V3,U9.VOUT,U6.VDD,microSD supply with 100 nF + 10 uF
+VBUS,J1.VBUS,U7.IN,USB charging input
+VBUS,J1.VBUS,+5V,bench power / charger output (do not back-feed)
+USB_DM,J1.D-,U1.PA11,USB full-speed D-
+USB_DP,J1.D+,U1.PA12,USB full-speed D+
+NRST,J2.4,U1.NRST,10 k pull-up + 100 nF to GND
+SWDIO,J2.2,U1.PA13,debug
+SWCLK,J2.3,U1.PA14,debug
+LCD_SCL,U2.SCL,U1.PA9,I2C1_SCL AF4; 4.7 k pull-up to 3V3
+LCD_SDA,U2.SDA,U1.PA10,I2C1_SDA AF4; 4.7 k pull-up to 3V3
+CC_SCK,U3.SCK,U1.PA5,SPI1_SCK AF5
+CC_MISO,U3.SO,U1.PB4,SPI1_MISO AF5
+CC_MOSI,U3.SI,U1.PB5,SPI1_MOSI AF5
+CC_CSN,U3.CS,U1.PD0,GPIO out; 10 k pull-up
+CC_GDO0,U3.GDO0,U1.PA1,GPIO in / TIM2_CH2 AF1
+CC_GDO2,U3.GDO2,U1.PB2,optional; GPIO in / EXTI2
+CC_RF_SW,U3.ANT_SW,U1.PC4,optional antenna switch control
+NRF_SCK,U4.SCK,U1.PD1,SPI2_SCK AF5
+NRF_MOSI,U4.MOSI,U1.PB15,SPI2_MOSI AF5
+NRF_MISO,U4.MISO,U1.PC2,SPI2_MISO AF5
+NRF_CSN,U4.CSN,U1.PB0,GPIO out; 10 k pull-up
+NRF_CE,U4.CE,U1.PC11,GPIO out; 10 k pull-down
+NRF_IRQ,U4.IRQ,U1.PB1,EXTI1; 10 k pull-up
+NRF_VCC,U4.VCC,+3V3,100 uF + 100 nF local
+SD_SCK,U6.SCK,U1.PD1,shared SPI2_SCK
+SD_MOSI,U6.MOSI,U1.PB15,shared SPI2_MOSI
+SD_MISO,U6.MISO,U1.PC2,shared SPI2_MISO; 10 k pull-up
+SD_CS,U6.CS,U1.PC12,GPIO out; 10 k pull-up
+SD_CD,U6.CD,U1.PC10,GPIO in; switch to GND; 10 k pull-up
+SD_PWR_EN,U9.EN,U1.PA3,optional load-switch enable (open-drain)
+IR_RX,U5.OUT,U1.PA0,TIM2_CH1 AF1 capture; 10 k pull-up
+IR_RX_VCC,U5.VCC,+3V3,via 100 R + 4.7 uF to GND
+IR_TX_ANODE,D1.A,+3V3,via R11 18 R
+IR_TX_CATHODE,D1.K,Q1.C,IR LED cathode to driver collector
+IR_TX_BASE,Q1.B,U1.PB9,via R10 1 k; TIM1_CH3N AF1
+IR_TX_EMITTER,Q1.E,GND,
+BTN_UP,SW1.1,U1.PB10,SW1.2 to GND; internal pull-up
+BTN_DOWN,SW2.1,U1.PC6,SW2.2 to GND; internal pull-up
+BTN_LEFT,SW3.1,U1.PB11,SW3.2 to GND; internal pull-up
+BTN_RIGHT,SW4.1,U1.PB12,SW4.2 to GND; internal pull-up
+BTN_OK,SW5.1,U1.PH3,SW5.2 to +3V3; 10 k pull-down; BOOT0
+BTN_BACK,SW6.1,U1.PC13,SW6.2 to GND; internal pull-up
+SPK,LS1.1,U1.PB8,optional; TIM16_CH1 AF14; 100 R series
+VIBRO,M1.+,+3V3,optional; MOSFET low-side on PA8; D1 flyback
+VIBRO_GATE,Q2.G,U1.PA8,GPIO out; 1 k series
+UART_TX,J3.2,U1.PB6,USART1_TX AF7 to companion RXD
+UART_RX,J3.3,U1.PB7,USART1_RX AF7 from companion TXD
+BAT_SENSE,R12.2,U1.PC5,ADC1_IN14; R13 to GND; 100 nF to GND
