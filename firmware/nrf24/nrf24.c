@@ -13,6 +13,8 @@
 
 #include <furi.h>
 #include <furi_hal.h>
+#include <furi_hal_resources.h>
+#include <furi_hal_spi.h>
 
 #define TAG "Nrf24"
 
