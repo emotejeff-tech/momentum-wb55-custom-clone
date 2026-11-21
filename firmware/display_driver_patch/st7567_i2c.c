@@ -42,6 +42,7 @@
 #define CMD_POWER_CONTROL     0x28
 #define CMD_SET_EV            0x81
 #define CMD_SOFT_RESET        0xE2
+#define CMD_NOP               0xE3
 #define CMD_BOOSTER           0xF8
 
 #define I2C_TIMEOUT_MS 100
@@ -88,9 +89,9 @@ static bool st7567_data(const uint8_t* data, size_t size) {
 }
 
 bool st7567_i2c_probe(void) {
-    /* Address-only write: START + addr + STOP. A single command byte is the
-     * smallest legal transaction and also verifies the control byte path. */
-    return st7567_cmd(CMD_SOFT_RESET);
+    /* Address + NOP command: the smallest transaction that proves both the
+     * address and the control-byte path without changing display state. */
+    return st7567_cmd(CMD_NOP);
 }
 
 void st7567_i2c_init(void) {
