@@ -270,7 +270,8 @@ class Link:
                     self.results[rid] = obj
             return
         if ftype in (T_HEARTBEAT, T_HELLO, T_STATUS):
-            self.inbox.put(frame)
+            # Liveness is tracked by last_rx; do not queue periodic frames or
+            # the inbox grows without bound.
             return
         if ftype == T_AI_REQ:
             self.inbox.put(frame)
