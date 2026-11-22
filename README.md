@@ -44,7 +44,7 @@ from the build (see [`docs/RESEARCH_FINDINGS.md`](docs/RESEARCH_FINDINGS.md)
 | Block | Part | Interface | Notes |
 | --- | --- | --- | --- |
 | MCU | STM32WB55RG (VFQFPN68) on Nucleo-WB55RG, or WB55CG (UFQFPN48) on WeAct | — | Dual-core: M4F app + M0+ BLE/802.15.4 stack. 1 MB flash, 256 KB RAM. |
-| Display | Estardyn/Tenstar **GM12864-59N**, 128×64 COG, 4-pin | **I²C**, addr `0x3F` | Controller: **ST7567S**. Backlight hard-wired on the module. |
+| Display | Estardyn/Tenstar **GM12864-59N**, 128×64 COG, 4-pin | **I²C**, addr `0x3C`–`0x3F` (auto-detected) | Controller: **ST7567S**. Backlight hard-wired on the module. |
 | Sub-GHz | CC1101 module (433/868 MHz) | SPI + GDO0 | 3.3 V only. |
 | 2.4 GHz | nRF24L01+ (PA/LNA optional) | SPI + CE/CSN/IRQ | 3.3 V, 10–100 µF bulk decoupling mandatory. |
 | IR RX | TSOP38238 (38 kHz demod) | GPIO / timer capture | Active-low output. |
@@ -155,6 +155,7 @@ Connection list (the schematic-pending netlist): [`hardware/netlist.csv`](hardwa
 ├── README.md                      ← you are here
 ├── docs/
 │   ├── RESEARCH_FINDINGS.md       ← prior art, Momentum porting analysis, decisions
+│   ├── LCD_COMPATIBILITY.md       ← does my GM12864-59N work? acceptance test + failure matrix
 │   └── BUILD_ROADMAP.md           ← phased bring-up checklist
 ├── hardware/
 │   ├── PINOUT_AND_WIRING.md       ← authoritative pin/AF table + wiring rules
@@ -166,6 +167,8 @@ Connection list (the schematic-pending netlist): [`hardware/netlist.csv`](hardwa
 │   └── nrf24/                     ← minimal nRF24L01+ driver for SPI2
 ├── architecture/
 │   └── AI_AND_PWNAGOTCHI_BRIDGE.md← options analysis, protocol spec, wiring
+├── tools/
+│   └── lcd_check/                 ← Arduino/ESP32 diagnostic for the panel alone
 └── bridge_firmware/
     ├── protocol/bridge_protocol.h ← shared frame/opcode definitions
     ├── esp32s3_bridge/            ← PlatformIO reference implementation

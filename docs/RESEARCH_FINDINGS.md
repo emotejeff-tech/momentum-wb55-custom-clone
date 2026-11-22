@@ -28,7 +28,8 @@ Claims that could not be traced to a primary source are marked **UNVERIFIED**.
    same mechanism Momentum itself uses for its `f18` board.
 3. **The GM12864-59N is an ST7567S with a 4-pin I²C interface.** It speaks a
    command/data protocol selected by a control byte (`0x00` / `0x40`) at 7-bit
-   address `0x3F`. This is *not* the SSD1306 protocol; u8g2 must be driven with
+   address `0x3C`–`0x3F` (auto-detected; most units `0x3F`). This is *not* the
+ SSD1306 protocol; u8g2 must be driven with
    a custom byte layer or a custom display callback. The panel's RAM layout
    (8 pages × 128 columns, LSB = top) matches u8g2's
    `u8g2_ll_hvline_vertical_top_lsb`, so no framebuffer reshaping is needed.
@@ -212,7 +213,7 @@ driver.
 | Item | Value | Source |
 | --- | --- | --- |
 | Interface | I²C, 2 wires, no RST/DC/CS | module pinout |
-| 7-bit address | `0x3F` (write byte `0x7E`) | community driver; ST7567 `SA0` strapping |
+| 7-bit address | `0x3C`–`0x3F` (SA0/SA1); 59N units usually `0x3F`, some `0x3E` | ST7567S datasheet; community drivers |
 | Control byte | `0x00` = command, `0x40` = data (Co = 0) | ST7567S datasheet; community driver |
 | Max I²C clock | 400 kHz class (u8g2 advertises `i2c_bus_clock_100kHz = 4` for this controller) | Flipper `u8x2_glue.c` display info |
 | Supply | 3.3 V | module |

@@ -14,6 +14,10 @@ Nothing here depends on SPI, on `gpio_display_cs/di/rst_n`, or on Momentum's
 `lib/u8g2/u8g2_glue.c`. The stock ST756x driver is left untouched for other
 boards.
 
+**Before wiring, read [`docs/LCD_COMPATIBILITY.md`](../../docs/LCD_COMPATIBILITY.md)**
+— it identifies which GM12864-59N variants this driver supports and gives a
+ten-minute acceptance test plus a symptom→cause table.
+
 ---
 
 ## 1. Why a new driver instead of reusing `u8x8_d_st756x_flipper`
@@ -70,6 +74,14 @@ below it keep working and now reach the I²C controller.
 - Keep I²C1 on `PA9`/`PA10` (the stock "power" handle). The BQ25896/BQ27220/
   LP5562 devices are absent and their failed probes are non-fatal.
 
+### 2.3 Address detection
+
+The ST7567S straps `SA0`/`SA1` into four possible addresses, `0x3C`–`0x3F`.
+Most 59N modules are `0x3F`, some batches are `0x3E`. `st7567_i2c_init()` scans
+the whole range, logs every responder, and uses the first; `st7567_i2c_scan()`
+is exposed for your own bring-up app. No source change is needed for a module at
+another strapping.
+
 ## 3. Initialisation sequence (what the driver sends)
 
 ```
@@ -79,7 +91,8 @@ below it keep working and now reach the I²C controller.
 0xC8            COM reverse
 0x40            start line 0
 0x25            regulation ratio (Rb/Ra)
-0x81 0x28       electronic volume = 0x28 + 2 ms
+0x81 0x28       electronic volume = 0x28
+0xF8 0x00       booster 4x (0x01 = 5x)
 0x2C            booster on                + 2 ms
 0x2E            + voltage regulator       + 2 ms
 0x2F            + voltage follower        + 2 ms
@@ -126,17 +139,32 @@ If you need more headroom, in order of effort:
 
 ```c
 /* temporary, e.g. in an app's on_start */
-st7567_i2c_probe();
-st7567_i2c_init();
-st7567_i2c_fill(0xFF);          /* all pixels on  */
+uint8_t address = st7567_i2c_scan();      /* logs 0x3C..0x3F, returns first */
+if(address == 0) {
+    /* wiring / pull-ups / module is not I2C: see docs/LCD_COMPATIBILITY.md */
+    return;
+}
+if(!st7567_i2c_init()) return;            /* false if the detected unit NACKs */
+
+st7567_i2c_fill(0xFF);                    /* all pixels on  */
 furi_delay_ms(500);
-st7567_i2c_fill(0x00);          /* all pixels off */
-st7567_i2c_fill(0xAA);          /* checkerboard   */
+st7567_i2c_fill(0x00);                    /* all pixels off */
+furi_delay_ms(500);
+st7567_i2c_fill(0xAA);                    /* 1-px checkerboard */
 ```
 
-Expected: uniform white, uniform black, then a 1-px checkerboard. If the
-checkerboard is shifted or wrapped, the column/page addressing is off by one —
-check `ST7567_WIDTH` and the panel's `default_x_offset` (0 for this module).
+Expected: uniform white, uniform black, then a fine checkerboard. For contrast,
+mirroring and batch tuning see the config API:
+
+```c
+St7567Config cfg;
+st7567_i2c_default_config(&cfg);
+cfg.contrast = 0x30;
+cfg.regulation_ratio = 0x26;
+cfg.booster_5x = true;
+cfg.flipped = true;
+st7567_i2c_init_ex(&cfg);
+```
 
 ## 6. Known caveats
 

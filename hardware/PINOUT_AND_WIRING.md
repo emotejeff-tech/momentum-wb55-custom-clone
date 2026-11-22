@@ -77,7 +77,7 @@ here needs 5 V.
 | Signal | MCU pin | AF | Dir | Peripheral | Stock | Notes |
 | --- | --- | --- | --- | --- | --- | --- |
 | `LCD_SCL` | **PA9** | AF4 `I2C1_SCL` | out | I2C1 | `PA9` = power-I²C SCL (BQ25896/BQ27220/LP5562) | 4.7 kΩ pull-up to 3V3; 400 kHz |
-| `LCD_SDA` | **PA10** | AF4 `I2C1_SDA` | I/O | I2C1 | `PA10` = power-I²C SDA | 4.7 kΩ pull-up; address `0x3F` |
+| `LCD_SDA` | **PA10** | AF4 `I2C1_SDA` | I/O | I2C1 | `PA10` = power-I²C SDA | 4.7 kΩ pull-up; address `0x3C`–`0x3F` auto-detected |
 | `LCD_3V3` | +3V3 | — | pwr | — | — | 100 nF + 4.7 µF at module |
 | `LCD_GND` | GND | — | pwr | — | — | — |
 
@@ -85,6 +85,11 @@ The module has **no reset, no DC, no CS**. Reset is the software command
 `0xE2`; the controller must be re-initialised after a power cycle. The stock
 display pins (`PC11`, `PB1`, `PB0`, `PD1`, `PB15`, `PC2`) are freed and
 reassigned to the nRF24 (§3.3).
+
+The ST7567S straps four addresses (`0x3C`–`0x3F`); most 59N modules are `0x3F`
+and some batches are `0x3E`. `st7567_i2c_init()` probes the whole range, so no
+rebuild is needed for a differently strapped unit. Compatibility and the
+ten-minute acceptance test: [`docs/LCD_COMPATIBILITY.md`](../docs/LCD_COMPATIBILITY.md).
 
 > Alternative bus: the display can instead go on **I2C3** (`PC0` SCL /
 > `PC1` SDA, AF4), which stock uses for the external I²C header. I²C1 is chosen
@@ -188,7 +193,7 @@ run the bridge over USB CDC instead — the protocol is transport-agnostic.
 | --- | --- | --- | --- | --- |
 | SPI1 (AF5) | PA5/PB4/PB5 | CC1101 (CS PD0) | 8 MHz | stock bus; external-header SPI also lives here |
 | SPI2 (AF5) | PD1/PB15/PC2 | nRF24 (CSN PB0), microSD (CS PC12) | 4–16 MHz | **was the display bus**; free now |
-| I2C1 (AF4) | PA9/PA10 | GM12864-59N (0x3F) | 400 kHz | **was the power-IC bus**; those ICs are absent |
+| I2C1 (AF4) | PA9/PA10 | GM12864-59N (`0x3C`–`0x3F`) | 400 kHz | **was the power-IC bus**; those ICs are absent |
 | I2C3 (AF4) | PC0/PC1 | external I²C header | 100 kHz | untouched; available for sensors |
 | USART1 (AF7) | PB6/PB7 | Pi Zero 2 W / ESP32-S3 | 921600 | COBS + CRC framing |
 | TIM1 | PB9 (CH3N) | IR TX | 38 kHz carrier | stock IR HAL |
@@ -206,8 +211,9 @@ run the bridge over USB CDC instead — the protocol is transport-agnostic.
 
 - **SPI2 CS lines**: `PB0` (nRF24) and `PC12` (SD) are both plain GPIO,
   software NSS — no hardware NSS conflict.
-- **I²C1 address space**: display `0x3F`; absent BQ25896 `0x6B`, BQ27220
-  `0x55`, LP5562 `0x30`. No collision, and the absent devices NACK harmlessly.
+- **I²C1 address space**: display `0x3C`–`0x3F`; absent BQ25896 `0x6B`,
+  BQ27220 `0x55`, LP5562 `0x30`. No collision, and the absent devices NACK
+  harmlessly.
 - **USART1 vs I²C1**: `PA9/PA10` can be either I²C1 or USART1 (AF7). We use
   them as I²C1 and keep USART1 on `PB6/PB7`, so both peripherals coexist.
 - **TIM2**: IR RX uses capture channels on `PA0`; CC1101 `GDO0` on `PA1` is
@@ -271,6 +277,10 @@ GM12864-59N (4-pin)                STM32WB55
   SCL  ──────────────── PA9   (AF4 I2C1_SCL, 4.7 kΩ to 3V3)
   SDA  ──────────────── PA10  (AF4 I2C1_SDA, 4.7 kΩ to 3V3)
 ```
+
+I²C address: `0x3C`–`0x3F` (SA0/SA1), auto-detected by the driver; most units
+are `0x3F`. If the scan finds nothing, the module is probably SPI or the
+pull-ups are missing — see `docs/LCD_COMPATIBILITY.md` §5.
 
 Contrast is set by the electronic-volume command (`0x81`, value 0x00–0x3F) and
 the regulation ratio (`0x20`–`0x27`). Defaults in the driver: ratio `0x25`,

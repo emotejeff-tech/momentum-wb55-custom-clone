@@ -3,12 +3,14 @@
  * @brief ST7567S 128x64 LCD over I2C for the GM12864-59N module.
  *
  * Protocol (ST7567S datasheet):
- *   START, 0x7E (addr 0x3F << 1), control byte, N data bytes, STOP
- *   control byte 0x00 -> following bytes are commands
- *   control byte 0x40 -> following bytes are display RAM data
+ *   START, addr (0x3C..0x3F << 1), control byte, N bytes, STOP
+ *   control byte 0x00 -> commands, 0x40 -> display RAM data
  *
  * The module has no reset pin, so 0xE2 (software reset) is mandatory and the
- * charge pump must be started in stages (0x2C, 0x2E, 0x2F) with settling time.
+ * charge pump is started in stages (0x2C, 0x2E, 0x2F) with settling time.
+ *
+ * Address handling: SA0/SA1 on the ST7567S select 0x3C..0x3F. init() probes
+ * the range so the same firmware works with 0x3F and 0x3E modules.
  *
  * Part of momentum-wb55-custom-clone. GPL-3.0-or-later.
  */
@@ -47,20 +49,28 @@
 
 #define I2C_TIMEOUT_MS 100
 
-/* The largest single I2C payload we build on the stack: control byte + 128. */
+/* Largest single I2C payload built on the stack: control byte + 128. */
 #define TX_CHUNK 128
+
+static uint8_t s_address = 0; /* 0 = not detected yet */
+static bool s_address_locked = false;
 
 static const FuriHalI2cBusHandle* st7567_bus(void) {
     /* On this board the stock "power" I2C1 bus carries the display. */
     return &furi_hal_i2c_handle_power;
 }
 
-static bool st7567_tx(const uint8_t* data, size_t size) {
-    bool ok = false;
+static bool st7567_tx_to(uint8_t address, const uint8_t* data, size_t size) {
+    bool ok;
     furi_hal_i2c_acquire(st7567_bus());
-    ok = furi_hal_i2c_tx(st7567_bus(), ST7567_I2C_ADDRESS, data, size, I2C_TIMEOUT_MS);
+    ok = furi_hal_i2c_tx(st7567_bus(), address, data, size, I2C_TIMEOUT_MS);
     furi_hal_i2c_release(st7567_bus());
     return ok;
+}
+
+static bool st7567_tx(const uint8_t* data, size_t size) {
+    if(s_address == 0) return false;
+    return st7567_tx_to(s_address, data, size);
 }
 
 static bool st7567_cmd(uint8_t command) {
@@ -88,24 +98,93 @@ static bool st7567_data(const uint8_t* data, size_t size) {
     return ok;
 }
 
-bool st7567_i2c_probe(void) {
-    /* Address + NOP command: the smallest transaction that proves both the
-     * address and the control-byte path without changing display state. */
-    return st7567_cmd(CMD_NOP);
+void st7567_i2c_default_config(St7567Config* config) {
+    if(config == NULL) return;
+    config->address = 0; /* auto-detect */
+    config->contrast = ST7567_DEFAULT_CONTRAST;
+    config->regulation_ratio = ST7567_DEFAULT_REG_RATIO;
+    config->bias_1_7 = false; /* 1/9 for 128x64 */
+    config->booster_5x = false; /* 4x is enough at 3.3 V */
+    config->flipped = false;
 }
 
-void st7567_i2c_init(void) {
+bool st7567_i2c_probe_addr(uint8_t address) {
+    const uint8_t frame[2] = {0x00, CMD_NOP};
+    return st7567_tx_to(address, frame, sizeof(frame));
+}
+
+uint8_t st7567_i2c_scan(void) {
+    uint8_t found = 0;
+    uint8_t found_count = 0;
+
+    for(uint8_t address = ST7567_I2C_ADDR_MIN; address <= ST7567_I2C_ADDR_MAX; address++) {
+        if(st7567_i2c_probe_addr(address)) {
+            FURI_LOG_I(TAG, "I2C device ACK at 0x%02X", address);
+            found_count++;
+            if(found == 0) found = address;
+        }
+    }
+
+    if(found_count > 1) {
+        FURI_LOG_W(TAG, "%u devices in 0x3C..0x3F; using 0x%02X", found_count, found);
+    } else if(found_count == 0) {
+        FURI_LOG_E(TAG, "no ST7567S at 0x3C..0x3F (wiring/pull-ups/address?)");
+    }
+    return found;
+}
+
+uint8_t st7567_i2c_get_address(void) {
+    return s_address;
+}
+
+void st7567_i2c_set_address(uint8_t address) {
+    s_address = address;
+    s_address_locked = (address != 0);
+}
+
+static bool st7567_resolve_address(uint8_t requested) {
+    if(requested != 0) {
+        if(!st7567_i2c_probe_addr(requested)) {
+            FURI_LOG_E(TAG, "no ACK at configured 0x%02X", requested);
+            return false;
+        }
+        s_address = requested;
+        s_address_locked = true;
+        return true;
+    }
+
+    if(s_address_locked && s_address != 0) {
+        return st7567_i2c_probe_addr(s_address);
+    }
+
+    uint8_t found = st7567_i2c_scan();
+    if(found == 0) return false;
+    s_address = found;
+    return true;
+}
+
+bool st7567_i2c_init_ex(const St7567Config* config) {
+    St7567Config defaults;
+    if(config == NULL) {
+        st7567_i2c_default_config(&defaults);
+        config = &defaults;
+    }
+
+    if(!st7567_resolve_address(config->address)) return false;
+
     /* Software reset, then let the internal state machine settle. */
     st7567_cmd(CMD_SOFT_RESET);
     furi_delay_ms(5);
 
-    st7567_cmd(CMD_BIAS_1_9); /* 128x64 panels use 1/9 bias */
-    st7567_cmd(CMD_SEG_NORMAL);
-    st7567_cmd(CMD_COM_REVERSE);
+    st7567_cmd(config->bias_1_7 ? CMD_BIAS_1_7 : CMD_BIAS_1_9);
+    st7567_cmd(config->flipped ? CMD_SEG_REVERSE : CMD_SEG_NORMAL);
+    st7567_cmd(config->flipped ? CMD_COM_NORMAL : CMD_COM_REVERSE);
     st7567_cmd(CMD_SET_START_LINE | 0x00);
-    st7567_cmd(CMD_REGULATION_RATIO | (ST7567_DEFAULT_REG_RATIO & 0x07));
+    st7567_cmd(CMD_REGULATION_RATIO | (config->regulation_ratio & 0x07));
+    st7567_cmd2(CMD_SET_EV, config->contrast & 0x3F);
 
-    st7567_cmd2(CMD_SET_EV, ST7567_DEFAULT_CONTRAST & 0x3F);
+    /* Booster level must be set before the power-control stages. */
+    st7567_cmd2(CMD_BOOSTER, config->booster_5x ? 0x01 : 0x00);
 
     /* Charge pump: booster -> regulator -> follower, with settling time. */
     st7567_cmd(CMD_POWER_CONTROL | 0x04); /* booster on */
@@ -119,7 +198,22 @@ void st7567_i2c_init(void) {
     st7567_cmd(CMD_INVERT_OFF);
     st7567_cmd(CMD_DISPLAY_ON);
 
-    FURI_LOG_I(TAG, "init done (addr 0x%02X)", ST7567_I2C_ADDRESS);
+    FURI_LOG_I(
+        TAG,
+        "init OK: addr=0x%02X contrast=0x%02X ratio=0x%02X%s%s",
+        s_address,
+        config->contrast & 0x3F,
+        config->regulation_ratio & 0x07,
+        config->flipped ? " flipped" : "",
+        config->booster_5x ? " booster5x" : "");
+
+    return true;
+}
+
+bool st7567_i2c_init(void) {
+    St7567Config config;
+    st7567_i2c_default_config(&config);
+    return st7567_i2c_init_ex(&config);
 }
 
 void st7567_i2c_set_contrast(uint8_t value) {

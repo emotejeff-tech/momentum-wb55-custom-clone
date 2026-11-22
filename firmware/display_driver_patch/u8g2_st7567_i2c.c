@@ -14,6 +14,7 @@
 #include "u8g2_st7567_i2c.h"
 #include "st7567_i2c.h"
 
+#include <furi.h>
 #include <string.h>
 
 static const u8x8_display_info_t u8x8_st7567_i2c_info = {
@@ -45,8 +46,11 @@ uint8_t u8x8_d_st7567_i2c(u8x8_t* u8x8, uint8_t msg, uint8_t arg_int, void* arg_
         break;
 
     case U8X8_MSG_DISPLAY_INIT:
-        /* No hardware reset line: initialise the controller in software. */
-        st7567_i2c_init();
+        /* No hardware reset line: initialise the controller in software.
+         * init() auto-detects 0x3C..0x3F and returns false if nothing ACKs. */
+        if(!st7567_i2c_init()) {
+            FURI_LOG_E("St7567I2c", "no display found at 0x3C..0x3F");
+        }
         break;
 
     case U8X8_MSG_DISPLAY_DRAW_TILE: {

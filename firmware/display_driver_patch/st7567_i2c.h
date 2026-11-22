@@ -1,14 +1,17 @@
 /**
  * @file st7567_i2c.h
- * @brief Minimal ST7567S 128x64 COG LCD driver over I2C (GM12864-59N).
+ * @brief ST7567S 128x64 COG LCD driver over I2C (GM12864-59N).
  *
- * Target: Estardyn/Tenstar GM12864-59N, 4-pin I2C module, controller ST7567S.
- * Bus:    Furi HAL I2C handle "power" (I2C1, PA9=SCL / PA10=SDA on this board).
- * Slave:  7-bit address 0x3F (write byte 0x7E).
+ * Controller: Sitronix ST7567S (also sold as ST7567A/G on similar panels).
+ * Module:     Estardyn/Tenstar GM12864-59N, 4-pin I2C, 128x64, metal frame.
  *
- * The controller has no reset/DC/CS pins on this module: reset is the software
- * command 0xE2, and command/data selection is the I2C control byte
- * (0x00 = command, 0x40 = data).
+ * Address:    the ST7567S exposes four I2C slave addresses, 0x3C..0x3F,
+ *             selected by the module's SA0/SA1 straps. Most 59N modules are
+ *             wired to 0x3F, but batches exist at 0x3E (and occasionally
+ *             0x3C/0x3D). This driver auto-detects across 0x3C..0x3F.
+ *
+ * Protocol:   7-bit address + control byte (0x00 = command, 0x40 = data).
+ *             No reset/DC/CS pins: reset is the software command 0xE2.
  *
  * Part of momentum-wb55-custom-clone. GPL-3.0-or-later.
  */
@@ -22,7 +25,13 @@
 extern "C" {
 #endif
 
+/* ST7567S I2C address range (SA0/SA1 strapping). */
+#define ST7567_I2C_ADDR_MIN 0x3C
+#define ST7567_I2C_ADDR_MAX 0x3F
+
+/* Factory default on most GM12864-59N modules. */
 #define ST7567_I2C_ADDRESS 0x3F
+
 #define ST7567_WIDTH       128
 #define ST7567_HEIGHT      64
 #define ST7567_PAGES       (ST7567_HEIGHT / 8)
@@ -34,18 +43,47 @@ extern "C" {
 #define ST7567_DEFAULT_REG_RATIO 0x25
 
 /**
- * @brief Probe the panel (address-only write). Useful during bring-up.
- * @return true if the controller ACKed.
+ * @brief Panel configuration. Zero-initialise then call
+ *        st7567_i2c_default_config() for the 59N defaults.
  */
-bool st7567_i2c_probe(void);
+typedef struct {
+    uint8_t address; /**< 0 = auto-detect 0x3C..0x3F, else fixed address */
+    uint8_t contrast; /**< electronic volume 0x00..0x3F */
+    uint8_t regulation_ratio; /**< 0x20..0x27 (low 3 bits used) */
+    bool bias_1_7; /**< false = 1/9 bias (128x64), true = 1/7 */
+    bool booster_5x; /**< false = 4x booster (3.3 V), true = 5x */
+    bool flipped; /**< 180-degree image using SEG/COM remap */
+} St7567Config;
+
+/** @brief Fill a config with GM12864-59N defaults. */
+void st7567_i2c_default_config(St7567Config* config);
+
+/** @brief True if the controller ACKs at this 7-bit address. */
+bool st7567_i2c_probe_addr(uint8_t address);
 
 /**
- * @brief Full initialisation sequence, including software reset.
- *
- * Safe to call again after a power cycle or a wedged controller. Takes about
- * 10 ms due to the charge-pump settling delays.
+ * @brief Probe 0x3C..0x3F and return the first address that ACKs, or 0.
+ *        Logs every responding address.
  */
-void st7567_i2c_init(void);
+uint8_t st7567_i2c_scan(void);
+
+/** @brief Address currently used by this driver (0 if not yet detected). */
+uint8_t st7567_i2c_get_address(void);
+
+/** @brief Force an address, or pass 0 to re-enable auto-detection. */
+void st7567_i2c_set_address(uint8_t address);
+
+/**
+ * @brief Probe and initialise with 59N defaults.
+ * @return true if a controller was found and the init sequence was sent.
+ */
+bool st7567_i2c_init(void);
+
+/**
+ * @brief Probe and initialise with an explicit configuration.
+ * @return false if the configured/detected address does not ACK.
+ */
+bool st7567_i2c_init_ex(const St7567Config* config);
 
 /** @brief Set electronic volume (contrast), 0x00..0x3F. */
 void st7567_i2c_set_contrast(uint8_t value);
@@ -72,9 +110,7 @@ void st7567_i2c_set_flipped(bool flipped);
  */
 void st7567_i2c_write_page(uint8_t page, uint8_t column, const uint8_t* data, size_t size);
 
-/**
- * @brief Fill the whole panel with a byte pattern (bring-up test).
- */
+/** @brief Fill the whole panel with a byte pattern (bring-up test). */
 void st7567_i2c_fill(uint8_t pattern);
 
 #ifdef __cplusplus
