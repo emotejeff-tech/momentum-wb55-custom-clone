@@ -44,7 +44,7 @@ from the build (see [`docs/RESEARCH_FINDINGS.md`](docs/RESEARCH_FINDINGS.md)
 | Block | Part | Interface | Notes |
 | --- | --- | --- | --- |
 | MCU | STM32WB55RG (VFQFPN68) on Nucleo-WB55RG, or WB55CG (UFQFPN48) on WeAct | — | Dual-core: M4F app + M0+ BLE/802.15.4 stack. 1 MB flash, 256 KB RAM. |
-| Display | Estardyn/Tenstar **GM12864-59N**, 128×64 COG, 4-pin | **I²C**, addr `0x3C`–`0x3F` (auto-detected) | Controller: **ST7567S**. Backlight hard-wired on the module. |
+| Display | Estardyn/Tenstar **GM12864-59N**, 128×64 COG, 4-pin | **I²C**, addr `0x3C`–`0x3F` (auto-detected) | Controller: **ST7567S** (confirmed for the Estardyn 12864-59N). Backlight hard-wired. |
 | Sub-GHz | CC1101 module (433/868 MHz) | SPI + GDO0 | 3.3 V only. |
 | 2.4 GHz | nRF24L01+ (PA/LNA optional) | SPI + CE/CSN/IRQ | 3.3 V, 10–100 µF bulk decoupling mandatory. |
 | IR RX | TSOP38238 (38 kHz demod) | GPIO / timer capture | Active-low output. |

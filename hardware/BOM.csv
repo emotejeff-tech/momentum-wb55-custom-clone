@@ -1,6 +1,6 @@
 Ref,Qty,Part,Module/Package,Value / Notes,Est_EUR,Supplier hint,Criticality
 U1,1,STM32WB55RGT6,NUCLEO-WB55RG board,1 MB flash / 256 KB RAM dual-core; VFQFPN68 on final PCB,25.00,ST / Mouser / DigiKey,mandatory
-U2,1,GM12864-59N I2C LCD,4-pin module,128x64 COG ST7567S; 3V3/GND/SCL/SDA,4.00,AliExpress / TZT / Tenstar,mandatory
+U2,1,GM12864-59N I2C LCD,4-pin module,128x64 COG ST7567S; 3V3/GND/SCL/SDA,4.00,Estardyn 12864-59N (AliExpress 3256811882689703),mandatory
 U3,1,CC1101 module,SPI module,433 or 868 MHz; 3.3 V; SMA or spring antenna,4.00,AliExpress,mandatory
 U4,1,nRF24L01+ module,SPI module,2.4 GHz; PA/LNA optional (needs 100 uF bulk),3.00,AliExpress,mandatory
 U5,1,TSOP38238,3-pin,38 kHz IR demodulator; 3.3 V,1.00,Vishay / Mouser,mandatory

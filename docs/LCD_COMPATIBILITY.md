@@ -13,6 +13,38 @@ This page is the acceptance test: do §4 before soldering anything permanent.
 
 ---
 
+## 0. Confirmed unit (the one this repo was checked against)
+
+The AliExpress listing
+[`3256811882689703`](https://www.aliexpress.us/item/3256811882689703.html)
+sells the **Estardyn 12864-59N**: 128×64 COG, metal frame, **4-pin I²C**
+("4P IIC Interface"), 3.3 V. Estardyn's own 59N I²C product data identifies the
+controller as **ST7567S** (model `12864-59N`, LCD type COG, resolution 128×64).
+
+That is exactly the panel this driver targets:
+
+| Property | This unit | Driver expectation |
+| --- | --- | --- |
+| Resolution | 128×64 | `ST7567_WIDTH`/`HEIGHT` = 128/64 |
+| Interface | 4-pin I²C | `st7567_i2c.c` |
+| Controller | ST7567S | ST7567 command set |
+| Address | `0x3C`–`0x3F` (strapped) | auto-detected; usually `0x3F` |
+| Supply | **3.3 V** | do not apply 5 V |
+| Backlight | hard-wired on | no brightness pin; expect ~20–30 mA |
+
+No code change is needed for this unit: the defaults (contrast `0x28`,
+regulation `0x25`, 1/9 bias, 4× booster, no flip) are the 59N defaults. The
+4-pin header order is silkscreened; on 59N modules it is usually
+`GND / VCC / SCL / SDA` (some batches label it `3V3 / GND / SCL / SDA`). With
+the power off, check the silkscreen before connecting; if the scan finds nothing,
+swapping SCL/SDA is the first thing to try.
+
+> I could not read the controller marking through the metal frame — no one can
+> without destroying the module. The identification above comes from the
+> listing/model data plus the Estardyn-branded product image and the
+> Estardyn 59N ST7567S product metadata, not from a die shot. §4 is the
+> definitive test for your specific unit.
+
 ## 1. Identify the module you actually have
 
 | What you see | Controller / interface | Works with this repo? |
